@@ -320,3 +320,26 @@ def test_salvar_jff(tmp_path):
 
     assert caminho.exists()
     assert caminho.read_text(encoding="utf-8") == texto
+
+
+def test_converter_com_alfabeto_externo():
+    automato = converter_jff_para_automato(JFF_SIMPLES, alfabeto={"a", "b", "c"})
+
+    automato.validar()
+    assert automato.alfabeto == {"a", "b", "c"}
+
+
+def test_converter_alfabeto_faltando_simbodo():
+    try:
+        converter_jff_para_automato(JFF_SIMPLES, alfabeto={"a"})
+        assert False, "deveria lançar ErroJFFInvalido"
+    except api.nucleo.excecoes.ErroJFFInvalido:
+        pass
+
+
+def test_converter_alfabeto_vazio():
+    try:
+        converter_jff_para_automato(JFF_SIMPLES, alfabeto=set())
+        assert False, "deveria lançar ErroJFFInvalido"
+    except api.nucleo.excecoes.ErroJFFInvalido:
+        pass
