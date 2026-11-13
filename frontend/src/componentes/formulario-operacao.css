@@ -42,3 +42,59 @@ article.formulario-operacao {
   color: var(--estado-perigo);
   text-align: center;
 }
+
+.gerar-automato {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.botoes-baixar-abrir {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+
+.botao-gerar-automato button span {
+  font-family: var(--fonte-secundaria);
+  font-size: var(--tamanho-18);
+  font-weight: var(--peso-semibold);
+  color: var(--caramelo-900);
+  white-space: nowrap;
+}
+
+
+.baixar-automato,
+.abrir-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 326px;
+  height: 48px;
+
+  border-radius: 10px;
+  border: 2px solid var(--borda-acento);
+  overflow: hidden;
+
+  background-color: var(--caramelo-500);
+  cursor: pointer;
+  transition-duration: 0.3s;
+}
+
+.baixar-automato:hover,
+.abrir-pdf:hover {
+  background-color: var(--caramelo-400);
+}
+
+.baixar-automato img,
+.abrir-pdf img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}

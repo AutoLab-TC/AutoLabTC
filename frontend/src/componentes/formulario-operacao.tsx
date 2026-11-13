@@ -3,6 +3,8 @@ import "./formulario-operacao.css";
 import PainelImportacao from "./importacao/painel-importacao";
 import PainelSelecao from "./selecao/painel-selecao";
 import { useState } from "react";
+//import abrirPdfIcone from "../assets/abrir-pdf.svg";
+import baixarAutomatoIcone from "../assets/automato-baixar.svg";
 
 interface FormOperacaoState {
   operacao: string;
@@ -10,6 +12,9 @@ interface FormOperacaoState {
   enviando: boolean;
   erro: string | null;
   urlDownload: string | null;
+  urlJff: string | null;
+  urlPdf: string | null;
+  nomeBase: string | null;
 }
 
 function FormularioOperacao() {
@@ -19,6 +24,9 @@ function FormularioOperacao() {
     enviando: false,
     erro: null,
     urlDownload: null,
+    urlJff: null,
+    urlPdf: null,
+    nomeBase: null,
   });
 
   function handleSelecionarOperacao(operacao: string) {
@@ -29,6 +37,9 @@ function FormularioOperacao() {
       enviando: false,
       erro: null,
       urlDownload: null,
+      urlJff: null,
+      urlPdf: null,
+      nomeBase: null,
     }));
   }
 
@@ -38,15 +49,23 @@ function FormularioOperacao() {
       arquivo,
       erro: null,
       urlDownload: null,
+      urlJff: null,
+      urlPdf: null,
+      nomeBase: null,
     }));
   }
 
   async function handleEnviar() {
     const { operacao, arquivo, enviando } = state;
+
     if (!arquivo) {
-      setState((s) => ({ ...s, erro: "Selecione um arquivo .jff antes de gerar." }));
+      setState((s) => ({
+        ...s,
+        erro: "Selecione um arquivo .jff antes de gerar.",
+      }));
       return;
     }
+
     if (enviando) return;
 
     setState((s) => ({ ...s, enviando: true, erro: null }));
@@ -62,14 +81,24 @@ function FormularioOperacao() {
 
       if (!resposta.ok) {
         const texto = await resposta.text();
-        setState((s) => ({ ...s, enviando: false, erro: texto }));
+
+        setState((s) => ({
+          ...s,
+          enviando: false,
+          erro: texto,
+        }));
         return;
       }
 
       const blob = await resposta.blob();
       const url = URL.createObjectURL(blob);
-      setState((s) => ({ ...s, enviando: false, urlDownload: url }));
-    } catch (erro) {
+
+      setState((s) => ({
+        ...s,
+        enviando: false,
+        urlDownload: url,
+      }));
+    } catch {
       setState((s) => ({
         ...s,
         enviando: false,
@@ -79,17 +108,25 @@ function FormularioOperacao() {
   }
 
   function handleDownload() {
-    const { urlDownload } = state;
-    if (!urlDownload) return;
+    const { urlJff, nomeBase } = state;
+
+    if (!urlJff || !nomeBase) return;
 
     const a = document.createElement("a");
-    a.href = urlDownload;
-    a.download = "complemento.zip";
+    a.href = urlJff;
+    a.download = `${nomeBase}.jff`;
+
     document.body.append(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(urlDownload);
-    setState((s) => ({ ...s, urlDownload: null }));
+  }
+
+  function handleAbrirPdf() {
+    const { urlPdf } = state;
+
+    if (!urlPdf) return;
+
+    window.open(urlPdf, "_blank");
   }
 
   return (
@@ -108,12 +145,33 @@ function FormularioOperacao() {
           onSelecionar={handleSelecionarOperacao}
         />
       </div>
-      <div className="botao-container">
+
+      <div className="botao-gerar-automato">
         <BotaoPrincipal
-          label={state.urlDownload ? "Baixar .zip" : "Gerar Autômato"}
+          label="Gerar Autômato"
           disabled={state.enviando || !state.arquivo}
-          onClick={state.urlDownload ? handleDownload : handleEnviar}
+          onClick={handleEnviar}
+          className="gerar-automato"
         />
+
+        {state.urlDownload && (
+          <div className="botoes-baixar-abrir">
+            <BotaoPrincipal
+              label="Baixar autômato"
+              onClick={handleDownload}
+              className="baixar-automato"
+              icon={<img src={baixarAutomatoIcone} alt="" aria-hidden="true" />}
+            />
+
+            <BotaoPrincipal
+              label="Abrir PDF"
+              onClick={handleAbrirPdf}
+              className="abrir-pdf"
+              //icon={<img src={abrirPdfIcone} alt="" aria-hidden="true" />}
+            />
+          </div>
+        )}
+
         {state.erro && <p role="status">{state.erro}</p>}
       </div>
     </article>
