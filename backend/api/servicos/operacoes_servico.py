@@ -8,19 +8,24 @@ from api.nucleo.utilitario.utilitarios_jff import (
 from api.relatorios.documento import gerar_pdf
 
 
-def complemento(jff: str) -> RespostaOperacao:
+def complemento(
+    jff: str,
+    alfabeto: set[str] | None = None,
+) -> RespostaOperacao:
     """Realiza a operação de complemento e gera os arquivos de resposta.
 
     Converte o .jff recebido em um AutomatoFinito, calcula o complemento
     e produz o .jff do autômato resultante e o relatório PDF com as
     etapas intermediárias da operação.
 
+    Se ``alfabeto`` for informado, ele substitui o alfabeto derivado do .jff.
+
     Raises:
         ErroJFFInvalido: se o conteúdo não for um .jff válido.
         OperacaoInvalidaError: se o autômato não for um AFD.
         ErroGeracaoPdf: se o relatório PDF não puder ser gerado.
     """
-    automato = converter_jff_para_automato(jff)
+    automato = converter_jff_para_automato(jff, alfabeto=alfabeto)
     resultado = complemento_afd(automato)
 
     return RespostaOperacao(
