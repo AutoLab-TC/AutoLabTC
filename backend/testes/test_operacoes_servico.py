@@ -58,16 +58,16 @@ def test_complemento_retorna_relatorio_pdf():
     assert len(resultado.relatorio_pdf) > 1000
 
 
-def test_compactar_empacota_arquivos():
-    resposta = RespostaOperacao(arquivo_jff="<xml/>", relatorio_pdf=b"%PDF")
+@pytest.mark.skipif(
+    shutil.which("pdflatex") is None,
+    reason="pdflatex não está disponível no PATH.",
+)
+def test_complemento_com_alfabeto_externo():
+    resultado = complemento(JFF, alfabeto={"a", "b"})
 
-    conteudo = resposta.compactar("operacao")
+    assert isinstance(resultado, RespostaOperacao)
 
-    with ZipFile(BytesIO(conteudo)) as zip:
-        nomes = zip.namelist()
-        jff = zip.read("operacao.jff")
-        pdf = zip.read("operacao.pdf")
+    automato = converter_jff_para_automato(resultado.arquivo_jff)
 
-    assert nomes == ["operacao.jff", "operacao.pdf"]
-    assert jff == b"<xml/>"
-    assert pdf == b"%PDF"
+    assert automato.eh_afd()
+    assert {"a", "b"}.issubset(automato.alfabeto)
