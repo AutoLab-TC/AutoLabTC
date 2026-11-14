@@ -3,10 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, Response, UploadFile
 
 from api.servicos.operacoes_servico import complemento
-from api.nucleo.excecoes import OperacaoInvalidaError
 
 router = APIRouter(prefix="/operacoes", tags=["Operações"])
-
 
 @router.post("/complemento")
 async def realizar_complemento(
@@ -14,15 +12,8 @@ async def realizar_complemento(
     alfabeto: Annotated[str | None, Form()] = None,
 ) -> Response:
     """Gera um .zip com o .jff do complemento e o relatório PDF das etapas."""
-    jff = (await arquivo.read()).decode("utf-8")
-
-    alfabeto_final = None
-    if alfabeto:
-        alfabeto_final = {s.strip() for s in alfabeto.split(",") if s.strip()}
-        if not alfabeto_final:
-            raise OperacaoInvalidaError("Alfabeto não pode ser vazio.")
-
-    resposta = complemento(jff, alfabeto=alfabeto_final)
+    arquivo_bytes = await arquivo.read()
+    resposta = complemento(arquivo_bytes, alfabeto=alfabeto)
 
     return Response(
         content=resposta.compactar("complemento"),

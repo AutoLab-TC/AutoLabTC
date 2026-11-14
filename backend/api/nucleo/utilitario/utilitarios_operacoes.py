@@ -16,14 +16,14 @@ def completar(automato: AutomatoFinito) -> None:
 
     existentes: set[tuple[Estado, str | None]] = set()
     for transicao in automato.transicoes:
-        if transicao.simbodo is not None:
-            existentes.add((transicao.origem, transicao.simbodo))
+        if transicao.simbolo is not None:
+            existentes.add((transicao.origem, transicao.simbolo))
 
     faltantes: list[tuple[Estado, str]] = []
     for estado in automato.estados:
-        for simbodo in simbolos:
-            if (estado, simbodo) not in existentes:
-                faltantes.append((estado, simbodo))
+        for simbolo in simbolos:
+            if (estado, simbolo) not in existentes:
+                faltantes.append((estado, simbolo))
 
     if not faltantes:
         return
@@ -40,14 +40,14 @@ def completar(automato: AutomatoFinito) -> None:
     poco = Estado(nome_poco, inicial=False, final=False)
     automato.adicionar_estado(poco)
 
-    for estado_origem, simbodo in faltantes:
+    for estado_origem, simbolo in faltantes:
         automato.adicionar_transicao(
-            Transicao(origem=estado_origem, simbodo=simbodo, destino=poco)
+            Transicao(origem=estado_origem, simbolo=simbolo, destino=poco)
         )
 
-    for simbodo in simbolos:
+    for simbolo in simbolos:
         automato.adicionar_transicao(
-            Transicao(origem=poco, simbodo=simbodo, destino=poco)
+            Transicao(origem=poco, simbolo=simbolo, destino=poco)
         )
 
 def inverter_finais(automato: AutomatoFinito) -> None:

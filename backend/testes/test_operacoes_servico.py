@@ -1,6 +1,4 @@
 import shutil
-from io import BytesIO
-from zipfile import ZipFile
 
 import pytest
 
@@ -37,7 +35,7 @@ JFF = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
     reason="pdflatex não está disponível no PATH.",
 )
 def test_complemento():
-    resultado = complemento(JFF)
+    resultado = complemento(JFF.encode("utf-8"))
 
     assert isinstance(resultado, RespostaOperacao)
     assert "<structure>" in resultado.arquivo_jff
@@ -52,7 +50,7 @@ def test_complemento():
     reason="pdflatex não está disponível no PATH.",
 )
 def test_complemento_retorna_relatorio_pdf():
-    resultado = complemento(JFF)
+    resultado = complemento(JFF.encode("utf-8"))
 
     assert resultado.relatorio_pdf.startswith(b"%PDF")
     assert len(resultado.relatorio_pdf) > 1000
@@ -63,7 +61,7 @@ def test_complemento_retorna_relatorio_pdf():
     reason="pdflatex não está disponível no PATH.",
 )
 def test_complemento_com_alfabeto_externo():
-    resultado = complemento(JFF, alfabeto={"a", "b"})
+    resultado = complemento(JFF.encode("utf-8"), alfabeto='["a","b"]')
 
     assert isinstance(resultado, RespostaOperacao)
 
@@ -71,3 +69,18 @@ def test_complemento_com_alfabeto_externo():
 
     assert automato.eh_afd()
     assert {"a", "b"}.issubset(automato.alfabeto)
+
+
+@pytest.mark.skipif(
+    shutil.which("pdflatex") is None,
+    reason="pdflatex não está disponível no PATH.",
+)
+def test_complemento_alfabeto_invalido_usa_derivado():
+    resultado = complemento(JFF.encode("utf-8"), alfabeto="a,b")
+
+    assert isinstance(resultado, RespostaOperacao)
+
+    automato = converter_jff_para_automato(resultado.arquivo_jff)
+
+    assert automato.eh_afd()
+    assert automato.alfabeto == {"a"}

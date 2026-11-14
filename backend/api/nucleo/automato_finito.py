@@ -37,8 +37,8 @@ class AutomatoFinito:
         for t in self.transicoes:
             if t.origem not in self.estados or t.destino not in self.estados:
                 raise ValueError("Transição referencia estado inexistente.")
-            if t.simbodo is not None and t.simbodo not in self.alfabeto:
-                raise ValueError(f"Símbodo '{t.simbodo}' não pertence ao alfabeto.")
+            if t.simbolo is not None and t.simbolo not in self.alfabeto:
+                raise ValueError(f"Símbodo '{t.simbolo}' não pertence ao alfabeto.")
 
     def copiar(self) -> "AutomatoFinito":
         """Retorna uma cópia profunda do autômato."""
@@ -47,16 +47,16 @@ class AutomatoFinito:
     def eh_afd(self) -> bool:
         """Verifica se o autômato é determinístico.
 
-        Um AFD não possui transições épsilon (``simbodo is None``) e não possui
+        Um AFD não possui transições épsilon (``simbolo is None``) e não possui
         duas transições com a mesma origem e o mesmo símbodo.
         """
         if self.estado_inicial is None:
             return False
         vistos: set[tuple[Estado, str | None]] = set()
         for transicao in self.transicoes:
-            if transicao.simbodo is None:
+            if transicao.simbolo is None:
                 return False
-            chave = (transicao.origem, transicao.simbodo)
+            chave = (transicao.origem, transicao.simbolo)
             if chave in vistos:
                 return False
             vistos.add(chave)
@@ -67,10 +67,10 @@ class AutomatoFinito:
         todo símbodo do alfabeto)."""
         existentes: set[tuple[Estado, str | None]] = set()
         for transicao in self.transicoes:
-            if transicao.simbodo is not None:
-                existentes.add((transicao.origem, transicao.simbodo))
+            if transicao.simbolo is not None:
+                existentes.add((transicao.origem, transicao.simbolo))
         for estado in self.estados:
-            for simbodo in self.alfabeto:
-                if (estado, simbodo) not in existentes:
+            for simbolo in self.alfabeto:
+                if (estado, simbolo) not in existentes:
                     return False
         return True
