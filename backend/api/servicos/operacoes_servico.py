@@ -1,5 +1,4 @@
 from api.nucleo.dto.resposta_operacao import RespostaOperacao
-from api.nucleo.dto.resultado_operacao import ResultadoOperacao
 from api.nucleo.operacao.complemento import complemento as complemento_afd
 from api.nucleo.utilitario.utilitarios_jff import (
     converter_automato_para_jff,
@@ -22,6 +21,8 @@ def complemento(jff: str) -> RespostaOperacao:
     """
     automato = converter_jff_para_automato(jff)
     resultado = complemento_afd(automato)
+
+    resultado.automato_final.organizar()
 
     return RespostaOperacao(
         arquivo_jff=converter_automato_para_jff(resultado.automato_final),
