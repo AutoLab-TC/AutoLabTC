@@ -25,10 +25,11 @@ def construir_resultado() -> ResultadoOperacao:
     automato.adicionar_transicao(Transicao(q1, "a", q1))
 
     return ResultadoOperacao(
+        titulo="Complemento de AFD",
         automato_final=automato.copiar(),
         etapas=[
-            Etapa("Automato original", automato.copiar()),
-            Etapa("Automato complemento", automato.copiar()),
+            Etapa("Automato original", "Automato original.", automato.copiar()),
+            Etapa("Automato complemento", "Automato complemento.", automato.copiar()),
         ],
     )
 
@@ -59,8 +60,15 @@ def test_gerar_pdf_com_caracteres_especiais():
     )
     automato.adicionar_transicao(Transicao(q0, "a&b", q1))
     resultado = ResultadoOperacao(
+        titulo="Complemento de AFD",
         automato_final=automato.copiar(),
-        etapas=[Etapa("Automato com caracteres especiais", automato.copiar())],
+        etapas=[
+            Etapa(
+                "Automato com caracteres especiais",
+                "Automato com caracteres especiais.",
+                automato.copiar(),
+            )
+        ],
     )
 
     pdf = gerar_pdf(resultado)
