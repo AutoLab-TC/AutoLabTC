@@ -142,6 +142,7 @@ Base local: `http://localhost:8000`
 
 - Conteúdo: `multipart/form-data`
 - Campo obrigatório: `arquivo` — arquivo `.jff`
+- Campo opcional: `alfabeto` — texto com símbodos separados por vírgula, ex: `a,b,c`
 - Resposta de sucesso: `200 OK`, `application/zip`
 - Nome do download: `complemento.zip`
 - Conteúdo do `.zip`:
@@ -153,6 +154,12 @@ Exemplo com `curl`:
 ```bash
 curl -X POST http://localhost:8000/operacoes/complemento \
   -F "arquivo=@meu-automato.jff" \
+  --output complemento.zip
+
+# Com alfabeto opcional:
+curl -X POST http://localhost:8000/operacoes/complemento \
+  -F "arquivo=@meu-automato.jff" \
+  -F "alfabeto=a,b,c" \
   --output complemento.zip
 ```
 

@@ -79,7 +79,7 @@ def enviar(cliente: TestClient, conteudo: bytes = b""):
 def test_complemento_retorna_zip_com_os_dois_arquivos(cliente, monkeypatch):
     resposta_fake = RespostaOperacao(arquivo_jff=JFF, relatorio_pdf=b"%PDF-1.4\n")
 
-    monkeypatch.setattr(operacoes_rotas, "complemento", lambda jff: resposta_fake)
+    monkeypatch.setattr(operacoes_rotas, "complemento", lambda jff, alfabeto=None: resposta_fake)
 
     resposta = enviar(cliente)
 
@@ -128,7 +128,7 @@ def test_afn_retorna_422(cliente):
 
 
 def test_erro_pdf_retorna_503(cliente, monkeypatch):
-    def falhar(jff):
+    def falhar(jff, alfabeto=None):
         raise ErroGeracaoPdf("O compilador LaTeX não está disponível no servidor.")
 
     monkeypatch.setattr(operacoes_rotas, "complemento", falhar)
@@ -139,3 +139,25 @@ def test_erro_pdf_retorna_503(cliente, monkeypatch):
     assert resposta.json() == {
         "detail": "O compilador LaTeX não está disponível no servidor."
     }
+
+
+def test_alfabeto_ausente_usa_comportamento_atual(cliente, monkeypatch):
+    resposta_fake = RespostaOperacao(arquivo_jff=JFF, relatorio_pdf=b"%PDF-1.4\n")
+    monkeypatch.setattr(
+        operacoes_rotas, "complemento", lambda jff, alfabeto=None: resposta_fake
+    )
+
+    resposta = enviar(cliente)
+
+    assert resposta.status_code == 200
+
+
+def test_alfabeto_com_simbodo_ausente_retorna_422(cliente):
+    resposta = cliente.post(
+        "/operacoes/complemento",
+        files={"arquivo": ("automato.jff", JFF.encode("utf-8"), "application/xml")},
+        data={"alfabeto": "b"},
+    )
+
+    assert resposta.status_code == 422
+    assert resposta.json()["detail"]

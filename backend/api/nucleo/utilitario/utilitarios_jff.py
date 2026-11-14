@@ -9,12 +9,19 @@ from api.nucleo.transicao import Transicao
 from api.nucleo.excecoes import ErroJFFInvalido
 
 
-def converter_jff_para_automato(jff: str) -> AutomatoFinito:
+def converter_jff_para_automato(
+    jff: str,
+    alfabeto: set[str] | None = None,
+) -> AutomatoFinito:
     """Transforma o conteúdo XML de um arquivo .jff em um AutomatoFinito.
 
     O alfabeto é derivado das transições, pois o formato .jff não o
     declara explicitamente. Transições com <read/> vazio representam
     transições épsilon (simbodo=None).
+
+    Se ``alfabeto`` for informado, ele substitui o alfabeto derivado.
+    Nesse caso, todos os símbodos usados nas transições precisam estar
+    presentes no alfabeto informado.
 
     Raises:
         ErroJFFInvalido: se o conteúdo não for um .jff válido ou descrever
@@ -37,11 +44,25 @@ def converter_jff_para_automato(jff: str) -> AutomatoFinito:
         raise ErroJFFInvalido("Arquivo .jff sem a seção <automaton>.")
 
     estados = _extrair_estados(xml_automato)
-    transicoes, alfabeto = _extrair_transicoes(xml_automato, estados)
+    transicoes, alfabeto_derivado = _extrair_transicoes(xml_automato, estados)
+
+    alfabeto_final = (
+        set(alfabeto) if alfabeto is not None else alfabeto_derivado
+    )
+
+    simbolos_usados = {
+        t.simbodo for t in transicoes if t.simbodo is not None
+    }
+    if "" in alfabeto_final:
+        raise ErroJFFInvalido("Alfabeto não pode conter símbodo vazio.")
+    if not simbolos_usados.issubset(alfabeto_final):
+        raise ErroJFFInvalido(
+            "Alfabeto informado não contém todos os símbodos usados no autômato."
+        )
 
     automato = AutomatoFinito(
         estados=set(estados.values()),
-        alfabeto=alfabeto,
+        alfabeto=alfabeto_final,
         transicoes=transicoes,
         estado_inicial=_extrair_estado_inicial(estados.values()),
         estados_finais={estado for estado in estados.values() if estado.final},
