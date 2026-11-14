@@ -8,8 +8,11 @@ class Estado:
     nome: str
     inicial: bool = False
     final: bool = False
+    x: float = 0.0
+    y: float = 0.0
 
     def __eq__(self, outro):
+        """Compara apenas pelo nome; coordenadas não identificam o estado."""
         if not isinstance(outro, Estado):
             return NotImplemented
         return self.nome == outro.nome
