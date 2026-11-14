@@ -1,3 +1,5 @@
+import pytest
+
 from api.nucleo.automato_finito import AutomatoFinito
 from api.nucleo.estado import Estado
 from api.nucleo.transicao import Transicao
@@ -8,6 +10,27 @@ def test_estado_basico():
     assert e.nome == "q0"
     assert e.inicial is True
     assert e.final is False
+
+
+def test_estado_coordenadas_padrao():
+    e = Estado("q0")
+    assert e.x == 0.0
+    assert e.y == 0.0
+
+
+def test_estado_coordenadas_informadas():
+    e = Estado("q0", x=120.5, y=-30.0)
+    assert e.x == 120.5
+    assert e.y == -30.0
+
+
+def test_estado_eq_hash_ignora_coordenadas():
+    a = Estado("q0", x=10.0, y=20.0)
+    b = Estado("q0", x=99.0, y=99.0)
+
+    assert a == b
+    assert hash(a) == hash(b)
+    assert len({a, b}) == 1
 
 
 def test_transicao_normal_e_epsilon():
@@ -79,3 +102,64 @@ def test_validar_simbodo_fora_do_alfabeto():
         assert False, "deveria lançar ValueError"
     except ValueError:
         pass
+
+
+def construir_automato_organizacao():
+    q0 = Estado("q0", inicial=True)
+    q1 = Estado("q1")
+    q2 = Estado("q2", final=True)
+    q3 = Estado("q3")  # inalcançável
+    a = AutomatoFinito(
+        estados={q0, q1, q2, q3},
+        alfabeto={"a", "b"},
+        estado_inicial=q0,
+        estados_finais={q2},
+    )
+    a.adicionar_transicao(Transicao(q0, "b", q2))
+    a.adicionar_transicao(Transicao(q0, "a", q1))
+    a.adicionar_transicao(Transicao(q1, "a", q2))
+    return a, q0, q1, q2, q3
+
+
+def test_organizar_atribui_coordenadas_a_todos():
+    a, q0, q1, q2, q3 = construir_automato_organizacao()
+
+    a.organizar()
+
+    posicoes = AutomatoFinito._posicoes_circulares(4)
+    atribuidas = [(estado.x, estado.y) for estado in (q0, q1, q2, q3)]
+    for coordenada in atribuidas:
+        assert coordenada in [pytest.approx(p) for p in posicoes]
+    assert len({(q0.x, q0.y), (q1.x, q1.y), (q2.x, q2.y), (q3.x, q3.y)}) == 4
+
+
+def test_organizar_ordem_busca_largura():
+    a, q0, q1, q2, _ = construir_automato_organizacao()
+
+    a.organizar()
+
+    ordem = [q0, q1, q2]  # 'a' antes de 'b', largura a partir de q0
+    posicoes = AutomatoFinito._posicoes_circulares(4)
+    for estado, esperado in zip(ordem, posicoes):
+        assert (estado.x, estado.y) == pytest.approx(esperado)
+
+
+def test_organizar_inalcancaveis_ao_final():
+    a, _, _, _, q3 = construir_automato_organizacao()
+
+    a.organizar()
+
+    posicoes = AutomatoFinito._posicoes_circulares(4)
+    assert (q3.x, q3.y) == pytest.approx(posicoes[3])
+
+
+def test_organizar_deterministico():
+    a, *_ = construir_automato_organizacao()
+    b, *_ = construir_automato_organizacao()
+
+    a.organizar()
+    b.organizar()
+
+    coordenadas_a = sorted((e.nome, e.x, e.y) for e in a.estados)
+    coordenadas_b = sorted((e.nome, e.x, e.y) for e in b.estados)
+    assert coordenadas_a == coordenadas_b
