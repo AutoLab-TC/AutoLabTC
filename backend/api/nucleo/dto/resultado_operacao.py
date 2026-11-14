@@ -3,7 +3,10 @@ from dataclasses import dataclass
 from api.nucleo.automato_finito import AutomatoFinito
 from api.nucleo.dto.etapa import Etapa
 
+
 @dataclass
 class ResultadoOperacao:
     automato_final: AutomatoFinito
     etapas: list[Etapa]
+    titulo: str | None = None
+    cabecalho: str | None = None
