@@ -1,12 +1,10 @@
-
 import xml.etree.ElementTree as ET
-
 from pathlib import Path
 
 from api.nucleo.automato_finito import AutomatoFinito
 from api.nucleo.estado import Estado
-from api.nucleo.transicao import Transicao
 from api.nucleo.excecoes import ErroJFFInvalido
+from api.nucleo.transicao import Transicao
 
 
 def converter_jff_para_automato(jff: str) -> AutomatoFinito:
@@ -70,9 +68,10 @@ def serializar(automato: AutomatoFinito) -> str:
     """Transforma um AutomatoFinito no texto XML de um arquivo .jff.
 
     Os estados recebem ids sequenciais em ordem determinística de nome e
-    coordenadas em grade, para que o arquivo abra organizado no JFLAP.
-    Os marcadores <initial/> e <final/> são escritos a partir dos
-    atributos estado_inicial e estados_finais do autômato.
+    as coordenadas x/y armazenadas em cada Estado (chame ``organizar()``
+    antes para garantir um layout organizado). Os marcadores <initial/> e
+    <final/> são escritos a partir dos atributos estado_inicial e
+    estados_finais do autômato.
     """
     automato.validar()
     ordem = sorted(
@@ -89,8 +88,8 @@ def serializar(automato: AutomatoFinito) -> str:
         elemento = ET.SubElement(
             xml_automato, "state", id=str(indice), name=estado.nome
         )
-        ET.SubElement(elemento, "x").text = f"{100.0 + (indice % 6) * 150:.1f}"
-        ET.SubElement(elemento, "y").text = f"{100.0 + (indice // 6) * 150:.1f}"
+        ET.SubElement(elemento, "x").text = f"{estado.x:.1f}"
+        ET.SubElement(elemento, "y").text = f"{estado.y:.1f}"
 
         if estado == automato.estado_inicial:
             ET.SubElement(elemento, "initial")
@@ -113,9 +112,7 @@ def serializar(automato: AutomatoFinito) -> str:
     ET.indent(raiz)
     texto = ET.tostring(raiz, encoding="unicode")
 
-    return (
-        '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + texto + "\n"
-    )
+    return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + texto + "\n"
 
 
 def _verificar_tipo_fa(raiz: ET.Element) -> None:
@@ -135,9 +132,7 @@ def _extrair_estados(xml_automato: ET.Element) -> dict[int, Estado]:
         try:
             id_estado = int(elemento.attrib["id"])
         except (KeyError, ValueError) as erro:
-            raise ErroJFFInvalido(
-                "Estado sem atributo 'id' numérico válido."
-            ) from erro
+            raise ErroJFFInvalido("Estado sem atributo 'id' numérico válido.") from erro
 
         if id_estado in estados:
             raise ErroJFFInvalido(f"Estado com id '{id_estado}' duplicado no arquivo.")
@@ -146,12 +141,23 @@ def _extrair_estados(xml_automato: ET.Element) -> dict[int, Estado]:
             nome=elemento.attrib.get("name", str(id_estado)),
             inicial=elemento.find("initial") is not None,
             final=elemento.find("final") is not None,
+            x=_extrair_coordenada(elemento, "x"),
+            y=_extrair_coordenada(elemento, "y"),
         )
 
     if not estados:
         raise ErroJFFInvalido("O arquivo .jff não possui estados.")
 
     return estados
+
+
+def _extrair_coordenada(elemento: ET.Element, tag: str) -> float:
+    """Lê a coordenada numérica de uma tag <x>/<y>; 0.0 se ausente ou inválida."""
+    texto = (elemento.findtext(tag) or "").strip()
+    try:
+        return float(texto)
+    except ValueError:
+        return 0.0
 
 
 def _extrair_transicoes(
@@ -176,9 +182,7 @@ def _extrair_transicoes(
         if simbodo is not None:
             alfabeto.add(simbodo)
 
-        transicoes.append(
-            Transicao(origem=origem, simbodo=simbodo, destino=destino)
-        )
+        transicoes.append(Transicao(origem=origem, simbodo=simbodo, destino=destino))
 
     return transicoes, alfabeto
 
