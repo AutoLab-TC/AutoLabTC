@@ -210,11 +210,28 @@ def concatenacao(
             )
         )
 
+    try:
+        automato_combinado.validar()
+    except ValueError as erro:
+        raise OperacaoInvalidaError(
+            f"A concatenação produziu um autômato inválido: {erro}"
+        ) from erro
+
     etapas.append(
         Etapa(
             descricao=(
                 "Adicionar transições épsilon dos finais do primeiro "
                 "autômato ao inicial do segundo"
+            ),
+            automato=automato_combinado.copiar(),
+        )
+    )
+
+    etapas.append(
+        Etapa(
+            descricao=(
+                "Autômato final da concatenação: AFN com transições épsilon, "
+                "inicial do primeiro autômato e finais do segundo"
             ),
             automato=automato_combinado.copiar(),
         )
