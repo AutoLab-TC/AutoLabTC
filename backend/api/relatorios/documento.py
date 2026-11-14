@@ -18,7 +18,9 @@ def gerar_pdf(
     """Gera um PDF com o diagrama de cada etapa da operação.
 
     O compilador ``pdflatex`` precisa estar disponível no ``PATH`` do
-    processo. O documento é criado em um diretório temporário e o conteúdo
+    processo. Antes de gerar o diagrama de cada etapa, os estados do
+    autômato são reorganizados (``AutomatoFinito.organizar()``). O
+    documento é criado em um diretório temporário e o conteúdo
     binário do PDF é retornado; o código LaTeX não é exposto pela API.
 
     Raises:
@@ -29,6 +31,9 @@ def gerar_pdf(
         raise ErroGeracaoPdf(
             "O compilador LaTeX (pdflatex) não está disponível no servidor."
         )
+
+    for etapa in resultado.etapas:
+        etapa.automato.organizar()
 
     try:
         return _gerar_pdf(resultado, titulo)
