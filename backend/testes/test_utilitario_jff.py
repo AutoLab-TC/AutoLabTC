@@ -1,16 +1,14 @@
-
 import api.nucleo.automato_finito
 import api.nucleo.estado
-import api.nucleo.transicao
 import api.nucleo.excecoes
-
+import api.nucleo.transicao
 from api.nucleo.utilitario.utilitarios_jff import (
+    converter_alfabeto_json,
     converter_automato_para_jff,
     converter_jff_para_automato,
-    serializar,
     salvar_jff,
+    serializar,
 )
-
 
 JFF_SIMPLES = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <structure>
@@ -84,10 +82,7 @@ def test_converter_transicao_epsilon():
 
 
 def test_converter_estado_sem_name_usa_id():
-    jff = JFF_SIMPLES.replace(
-        '<state id="0" name="q0">',
-        '<state id="0">'
-    )
+    jff = JFF_SIMPLES.replace('<state id="0" name="q0">', '<state id="0">')
 
     automato = converter_jff_para_automato(jff)
 
@@ -111,10 +106,7 @@ def test_raiz_inesperada():
 
 
 def test_tipo_nao_fa():
-    jff = JFF_SIMPLES.replace(
-        "<type>fa</type>",
-        "<type>turing</type>"
-    )
+    jff = JFF_SIMPLES.replace("<type>fa</type>", "<type>turing</type>")
 
     try:
         converter_jff_para_automato(jff)
@@ -134,11 +126,7 @@ def test_sem_secao_automaton():
 
 
 def test_transicao_estado_inexistente():
-    jff = JFF_SIMPLES.replace(
-        "<from>0</from>",
-        "<from>9</from>",
-        1
-    )
+    jff = JFF_SIMPLES.replace("<from>0</from>", "<from>9</from>", 1)
 
     try:
         converter_jff_para_automato(jff)
@@ -158,10 +146,7 @@ def test_sem_estado_inicial():
 
 
 def test_dois_estados_iniciais():
-    jff = JFF_SIMPLES.replace(
-        "<final/>",
-        "<final/><initial/>"
-    )
+    jff = JFF_SIMPLES.replace("<final/>", "<final/><initial/>")
 
     try:
         converter_jff_para_automato(jff)
@@ -171,10 +156,7 @@ def test_dois_estados_iniciais():
 
 
 def test_estado_sem_id():
-    jff = JFF_SIMPLES.replace(
-        '<state id="0" name="q0">',
-        '<state name="q0">'
-    )
+    jff = JFF_SIMPLES.replace('<state id="0" name="q0">', '<state name="q0">')
 
     try:
         converter_jff_para_automato(jff)
@@ -194,15 +176,9 @@ def construir_automato_teste():
         estados_finais={q1},
     )
 
-    automato.adicionar_transicao(
-        api.nucleo.transicao.Transicao(q0, "a", q0)
-    )
-    automato.adicionar_transicao(
-        api.nucleo.transicao.Transicao(q0, "b", q1)
-    )
-    automato.adicionar_transicao(
-        api.nucleo.transicao.Transicao(q1, "a", q1)
-    )
+    automato.adicionar_transicao(api.nucleo.transicao.Transicao(q0, "a", q0))
+    automato.adicionar_transicao(api.nucleo.transicao.Transicao(q0, "b", q1))
+    automato.adicionar_transicao(api.nucleo.transicao.Transicao(q1, "a", q1))
 
     return automato
 
@@ -221,9 +197,7 @@ def test_exportar_retorna_jff():
 def test_exportar_roundtrip():
     automato = construir_automato_teste()
 
-    reconstruido = converter_jff_para_automato(
-        converter_automato_para_jff(automato)
-    )
+    reconstruido = converter_jff_para_automato(converter_automato_para_jff(automato))
 
     reconstruido.validar()  # não deve lançar
     assert reconstruido.estados == automato.estados
@@ -232,12 +206,8 @@ def test_exportar_roundtrip():
     assert reconstruido.estados_finais == automato.estados_finais
 
     assert sorted(
-        (t.origem.nome, t.simbolo, t.destino.nome)
-        for t in reconstruido.transicoes
-    ) == sorted(
-        (t.origem.nome, t.simbolo, t.destino.nome)
-        for t in automato.transicoes
-    )
+        (t.origem.nome, t.simbolo, t.destino.nome) for t in reconstruido.transicoes
+    ) == sorted((t.origem.nome, t.simbolo, t.destino.nome) for t in automato.transicoes)
 
 
 def test_exportar_transicao_epsilon():
@@ -245,23 +215,16 @@ def test_exportar_transicao_epsilon():
     q1 = api.nucleo.estado.Estado("q1", final=True)
 
     automato = api.nucleo.automato_finito.AutomatoFinito(
-        estados={q0, q1},
-        alfabeto=set(),
-        estado_inicial=q0,
-        estados_finais={q1}
+        estados={q0, q1}, alfabeto=set(), estado_inicial=q0, estados_finais={q1}
     )
 
     automato.adicionar_transicao(
         api.nucleo.transicao.Transicao(q0, None, q1)
     )  # épsilon
 
-    reconstruido = converter_jff_para_automato(
-        converter_automato_para_jff(automato)
-    )
+    reconstruido = converter_jff_para_automato(converter_automato_para_jff(automato))
 
-    assert reconstruido.transicoes == [
-        api.nucleo.transicao.Transicao(q0, None, q1)
-    ]
+    assert reconstruido.transicoes == [api.nucleo.transicao.Transicao(q0, None, q1)]
     assert reconstruido.alfabeto == set()
 
 
@@ -270,19 +233,12 @@ def test_exportar_usa_atributos_do_automato():
     q1 = api.nucleo.estado.Estado("q1")
 
     automato = api.nucleo.automato_finito.AutomatoFinito(
-        estados={q0, q1},
-        alfabeto={"a"},
-        estado_inicial=q0,
-        estados_finais={q1}
+        estados={q0, q1}, alfabeto={"a"}, estado_inicial=q0, estados_finais={q1}
     )
 
-    automato.adicionar_transicao(
-        api.nucleo.transicao.Transicao(q0, "a", q1)
-    )
+    automato.adicionar_transicao(api.nucleo.transicao.Transicao(q0, "a", q1))
 
-    reconstruido = converter_jff_para_automato(
-        converter_automato_para_jff(automato)
-    )
+    reconstruido = converter_jff_para_automato(converter_automato_para_jff(automato))
 
     assert reconstruido.estado_inicial.nome == "q0"
     assert [e.nome for e in reconstruido.estados_finais] == ["q1"]
@@ -300,9 +256,7 @@ def test_serializar_ordem_deterministica():
 
 def test_exportar_automato_invalido():
     automato = api.nucleo.automato_finito.AutomatoFinito(
-        estados=set(),
-        alfabeto=set(),
-        estado_inicial=None
+        estados=set(), alfabeto=set(), estado_inicial=None
     )
 
     try:
@@ -320,3 +274,42 @@ def test_salvar_jff(tmp_path):
 
     assert caminho.exists()
     assert caminho.read_text(encoding="utf-8") == texto
+
+
+def test_converter_com_alfabeto_externo():
+    automato = converter_jff_para_automato(JFF_SIMPLES, alfabeto={"a", "b", "c"})
+
+    automato.validar()
+    assert automato.alfabeto == {"a", "b", "c"}
+
+
+def test_converter_alfabeto_faltando_simbodo():
+    try:
+        converter_jff_para_automato(JFF_SIMPLES, alfabeto={"a"})
+        assert False, "deveria lançar ErroJFFInvalido"
+    except api.nucleo.excecoes.ErroJFFInvalido:
+        pass
+
+
+def test_converter_alfabeto_vazio():
+    try:
+        converter_jff_para_automato(JFF_SIMPLES, alfabeto=set())
+        assert False, "deveria lançar ErroJFFInvalido"
+    except api.nucleo.excecoes.ErroJFFInvalido:
+        pass
+
+
+def test_converter_alfabeto_json():
+    alfabeto = converter_alfabeto_json('["a", "b"]')
+
+    assert alfabeto == {"a", "b"}
+
+
+def test_converter_alfabeto_json_aceita_texto_unico():
+    alfabeto = converter_alfabeto_json('"a"')
+
+    assert alfabeto == {"a"}
+
+
+def test_converter_alfabeto_json_invalido_retorna_none():
+    assert converter_alfabeto_json("a,b") is None
