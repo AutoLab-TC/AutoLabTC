@@ -97,7 +97,7 @@ def serializar(automato: AutomatoFinito) -> str:
             xml_automato, "state", id=str(indice), name=estado.nome
         )
         ET.SubElement(elemento, "x").text = f"{estado.x * _FATOR_ESCALA_COORDENADAS_JFF:.1f}"
-        ET.SubElement(elemento, "y").text = f"{estado.y * _FATOR_ESCALA_COORDENADAS_JFF:.1f}"
+        ET.SubElement(elemento, "y").text = f"{estado.y * (-_FATOR_ESCALA_COORDENADAS_JFF):.1f}"
 
         if estado == automato.estado_inicial:
             ET.SubElement(elemento, "initial")
