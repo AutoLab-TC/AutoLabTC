@@ -38,6 +38,13 @@ class AutomatoFinito:
         serialização .jff quanto pelo diagrama TikZ do relatório.
         """
         ordem = self._ordenar_estados()
+
+        # O estado sumidouro (poço) é sempre posicionado ao final do
+        # círculo, para não intercalar com os estados do autômato.
+        pocos = [estado for estado in ordem if estado.nome.startswith("poço")]
+        outros = [estado for estado in ordem if not estado.nome.startswith("poço")]
+        ordem = outros + pocos
+
         posicoes = self._posicoes_circulares(len(ordem))
 
         for estado, (x, y) in zip(ordem, posicoes):
