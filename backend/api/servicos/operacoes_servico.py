@@ -36,5 +36,5 @@ def complemento(
 
     return RespostaOperacao(
         arquivo_jff=converter_automato_para_jff(resultado.automato_final),
-        relatorio_pdf=gerar_pdf(resultado),
+        relatorio_pdf=gerar_pdf(resultado, titulo="Complemento"),
     )

@@ -69,7 +69,7 @@ def test_validar_transicao_estado_desconhecido():
         pass
 
 
-def test_validar_simbodo_fora_do_alfabeto():
+def test_validar_simbolo_fora_do_alfabeto():
     q0 = Estado("q0", inicial=True)
     q1 = Estado("q1")
     a = AutomatoFinito(estados={q0, q1}, alfabeto={"a"}, estado_inicial=q0)

@@ -119,6 +119,8 @@ def test_complemento_registra_etapas():
     assert isinstance(etapas, list)
     assert len(etapas) >= 2
     for etapa in etapas:
+        assert hasattr(etapa, "titulo")
+        assert etapa.titulo
         assert hasattr(etapa, "descricao")
         assert etapa.descricao
         snap = etapa.automato
