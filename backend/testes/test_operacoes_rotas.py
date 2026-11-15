@@ -156,7 +156,7 @@ def test_alfabeto_com_simbodo_ausente_retorna_422(cliente):
     resposta = cliente.post(
         "/operacoes/complemento",
         files={"arquivo": ("automato.jff", JFF.encode("utf-8"), "application/xml")},
-        data={"alfabeto": "b"},
+        data={"alfabeto": '["b"]'},
     )
 
     assert resposta.status_code == 422

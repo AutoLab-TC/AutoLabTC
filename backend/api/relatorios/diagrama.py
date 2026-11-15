@@ -98,8 +98,8 @@ def _ordenar_estados(automato: AutomatoFinito) -> list[Estado]:
         for transicao in sorted(
             automato.transicoes,
             key=lambda transicao: (
-                transicao.simbodo is not None,
-                transicao.simbodo or "",
+                transicao.simbolo is not None,
+                transicao.simbolo or "",
                 transicao.destino.nome,
             ),
         ):
@@ -139,13 +139,13 @@ def _agrupar_por_par(
         key=lambda transicao: (
             transicao.origem.nome,
             transicao.destino.nome,
-            transicao.simbodo is not None,
-            transicao.simbodo or "",
+            transicao.simbolo is not None,
+            transicao.simbolo or "",
         ),
     ):
         simbolos = grupos.setdefault((transicao.origem, transicao.destino), [])
-        if transicao.simbodo not in simbolos:
-            simbolos.append(transicao.simbodo)
+        if transicao.simbolo not in simbolos:
+            simbolos.append(transicao.simbolo)
 
     return grupos
 
