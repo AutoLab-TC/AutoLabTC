@@ -20,9 +20,10 @@ def gerar_pdf(
 ) -> bytes:
     """Gera um PDF com o diagrama de cada etapa da operação.
 
-    A primeira página contém o nome AutoLab-TC no topo, o título da
-    operação centralizado e o resumo; cada etapa ocupa uma página própria.
-    O rodapé traz a referência do livro do Sipser em todas as páginas.
+    A primeira página contém a capa do projeto de pesquisa, com os dados
+    institucionais, o título da operação e a equipe; cada etapa ocupa uma
+    página própria. O rodapé traz a referência do livro do Sipser em todas
+    as páginas.
 
     O compilador ``pdflatex`` precisa estar disponível no ``PATH`` do
     processo. Antes de gerar o diagrama de cada etapa, os estados do
@@ -44,7 +45,7 @@ def gerar_pdf(
         etapa.automato.organizar()
 
     try:
-        titulo_escaped = escapar_latex(f"Operação: {titulo}")
+        titulo_escaped = escapar_latex(titulo.upper())
 
         documento = Document(documentclass="article", page_numbers=False)
         documento.preamble.append(NoEscape(r"\usepackage[margin=2cm]{geometry}"))
@@ -52,12 +53,7 @@ def gerar_pdf(
         documento.preamble.append(NoEscape(r"\usetikzlibrary{automata,positioning}"))
         documento.preamble.append(Package("fancyhdr"))
 
-        estilo_capa = PageStyle("autolabcapa", header_thickness=0.4)
         estilo = PageStyle("autolab", header_thickness=0.4, footer_thickness=0.4)
-
-        estilo_capa.append(
-            Head("C", data=NoEscape(r"\large " + escapar_latex("AutoLab-TC")))
-        )
 
         estilo.append(
             Head(
@@ -85,22 +81,83 @@ def gerar_pdf(
         )
         estilo.append(Foot("R", data=NoEscape(r"\small \thepage")))
 
-        documento.preamble.append(estilo_capa)
         documento.preamble.append(estilo)
         documento.change_document_style("autolab")
 
         # Capa.
-        documento.append(NoEscape(r"\thispagestyle{autolabcapa}"))
+        documento.append(NoEscape(r"\thispagestyle{empty}"))
         documento.append(NoEscape(r"\vspace*{\fill}"))
         documento.append(NoEscape(r"\begin{center}"))
-        documento.append(NoEscape(r"\fontsize{36}{43.2}\selectfont " + titulo_escaped))
+        documento.append(
+            NoEscape(
+                r"\LARGE{\textbf{Universidade Federal de Sergipe - UFS\\Campus Universit\'ario Prof. Alberto Carvalho\\Departamento de Sistemas de Informa\c{c}\~ao - DSI}}"
+                "\n\n"
+                r"\vspace{10mm}"
+                "\n"
+                r"\large PROJETO DE PESQUISA DEPARTAMENTAL\\INICIA\c{C}\~AO CIENT\'IFICA \textendash{} DSI.UFS"
+                "\n\n"
+                r"\vspace{15mm}"
+                "\n\n"
+                r"\begin{center}"
+                "\n"
+                r"\begin{minipage}[c]{14cm}"
+                "\n"
+                r"\begin{center}"
+                "\n"
+                r"\hrulefill\\"
+                "\n"
+                r"\vspace{.5cm} {\fontsize{22}{26}\selectfont\sf \textsc{OPERA\c{C}\~AO "
+                + titulo_escaped
+                + r"}} \\"
+                "\n"
+                r"\hrulefill\\"
+                "\n"
+                r"\end{center}"
+                "\n"
+                r"\end{minipage}"
+                "\n"
+                r"\end{center}"
+                "\n\n"
+                r"\vspace{15mm}"
+                "\n"
+                r"\textbf{\LARGE AutoLab-TC: Plataforma Computacional para Constru\c{c}\~ao, Transforma\c{c}\~ao e Manipula\c{c}\~ao de Aut\^omatos Finitos Integrada ao JFLAP}"
+                "\n\n"
+                r"\vspace{20mm}"
+                "\n"
+                r"{\large\bf \textsc{Professores Orientadores}} \\"
+                "\n"
+                r"{\large\textit{Prof. Dr. Alcides Xavier Benicasa}} \\"
+                "\n"
+                r"{\large\textit{Prof. Dr. Andr\'e Luis Meneses Silva}} \\"
+                "\n\n"
+                r"\vspace{10mm}"
+                "\n"
+                r"\textbf{\large Orientandos\\}"
+                "\n"
+                r"{\large\textit{Alysson Augusto Peixoto dos Santos\\"
+                "\n"
+                r"Anderson Santos Santana\\"
+                "\n"
+                r"Clara Fagundes dos Santos\\"
+                "\n"
+                r"Luiz Felipe Santos de Mendon\c{c}a\\"
+                "\n"
+                r"Ulisses Abade Porto\\"
+                "\n"
+                r"Victor Eduardo Alves dos Santos}}"
+                "\n\n"
+                r"\vspace{15mm}"
+                "\n"
+                r"{\large Per\'iodo de 2026.2 \`a 2027.1}"
+            )
+        )
         documento.append(NoEscape(r"\end{center}"))
         documento.append(NoEscape(r"\vspace*{\fill}"))
 
         documento.append(NoEscape(r"\begin{center}"))
         documento.append(
             NoEscape(
-                r"\textbf{\Large "
+                r"\textbf{\LARGE "
                 + escapar_latex(f"Total de etapas: {len(resultado.etapas)}")
                 + "}"
             )

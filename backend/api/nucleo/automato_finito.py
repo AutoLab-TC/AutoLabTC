@@ -71,8 +71,8 @@ class AutomatoFinito:
             for transicao in sorted(
                 self.transicoes,
                 key=lambda transicao: (
-                    transicao.simbodo is not None,
-                    transicao.simbodo or "",
+                    transicao.simbolo is not None,
+                    transicao.simbolo or "",
                     transicao.destino.nome,
                 ),
             ):
