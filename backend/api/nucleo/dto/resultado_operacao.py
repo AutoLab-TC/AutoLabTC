@@ -8,5 +8,3 @@ from api.nucleo.dto.etapa import Etapa
 class ResultadoOperacao:
     automato_final: AutomatoFinito
     etapas: list[Etapa]
-    titulo: str | None = None
-    cabecalho: str | None = None

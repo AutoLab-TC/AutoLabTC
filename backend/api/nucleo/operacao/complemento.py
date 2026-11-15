@@ -68,7 +68,6 @@ def complemento(automato: AutomatoFinito) -> ResultadoOperacao:
     )
 
     return ResultadoOperacao(
-        titulo = "Complemento de AFD",
         automato_final = automato.copiar(),
         etapas = etapas,
     )
