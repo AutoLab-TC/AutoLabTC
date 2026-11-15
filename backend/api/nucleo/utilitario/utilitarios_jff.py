@@ -6,6 +6,12 @@ from api.nucleo.estado import Estado
 from api.nucleo.excecoes import ErroJFFInvalido
 from api.nucleo.transicao import Transicao
 
+# Fator de escala aplicado às coordenadas x/y ao serializar um .jff:
+# o layout interno usa unidades de cm (consumidas pelo TikZ/PDF), mas o
+# JFLAP interpreta as coordenadas em pixels, então multiplicamos por 100
+# para manter espaçamento legível. Altere este valor para ajustar a escala.
+_FATOR_ESCALA_COORDENADAS_JFF = 50.0
+
 
 def converter_jff_para_automato(jff: str) -> AutomatoFinito:
     """Transforma o conteúdo XML de um arquivo .jff em um AutomatoFinito.
@@ -68,8 +74,10 @@ def serializar(automato: AutomatoFinito) -> str:
     """Transforma um AutomatoFinito no texto XML de um arquivo .jff.
 
     Os estados recebem ids sequenciais em ordem determinística de nome e
-    as coordenadas x/y armazenadas em cada Estado (chame ``organizar()``
-    antes para garantir um layout organizado). Os marcadores <initial/> e
+    as coordenadas x/y armazenadas em cada Estado, multiplicadas por
+    ``_FATOR_ESCALA_COORDENADAS_JFF`` para converter cm em pixels do
+    JFLAP (chame ``organizar()`` antes para garantir um layout organizado).
+    Os marcadores <initial/> e
     <final/> são escritos a partir dos atributos estado_inicial e
     estados_finais do autômato.
     """
@@ -88,8 +96,8 @@ def serializar(automato: AutomatoFinito) -> str:
         elemento = ET.SubElement(
             xml_automato, "state", id=str(indice), name=estado.nome
         )
-        ET.SubElement(elemento, "x").text = f"{estado.x:.1f}"
-        ET.SubElement(elemento, "y").text = f"{estado.y:.1f}"
+        ET.SubElement(elemento, "x").text = f"{estado.x * _FATOR_ESCALA_COORDENADAS_JFF:.1f}"
+        ET.SubElement(elemento, "y").text = f"{estado.y * _FATOR_ESCALA_COORDENADAS_JFF:.1f}"
 
         if estado == automato.estado_inicial:
             ET.SubElement(elemento, "initial")
