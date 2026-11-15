@@ -6,9 +6,11 @@ interface BotaoPrincipalProps {
   label: string;
   disabled?: boolean;
   icon?: React.ReactNode;
+  /*adicionado por Clara:*/
+  className?: string;
 }
-
-function BotaoPrincipal({ onClick, label, disabled, icon }: BotaoPrincipalProps) {
+/*Adicionei className e className={className}*/
+function BotaoPrincipal({ onClick, label, disabled, icon, className }: BotaoPrincipalProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   return (
@@ -18,6 +20,7 @@ function BotaoPrincipal({ onClick, label, disabled, icon }: BotaoPrincipalProps)
         type="button"
         onClick={onClick}
         disabled={disabled}
+        className={className}
       >
         {icon ? <span>{icon}</span> : null}
         <span>{label}</span>
