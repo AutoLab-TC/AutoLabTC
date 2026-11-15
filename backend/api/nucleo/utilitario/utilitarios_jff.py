@@ -1,3 +1,4 @@
+import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -13,12 +14,19 @@ from api.nucleo.transicao import Transicao
 _FATOR_ESCALA_COORDENADAS_JFF = 50.0
 
 
-def converter_jff_para_automato(jff: str) -> AutomatoFinito:
+def converter_jff_para_automato(
+    jff: str,
+    alfabeto: set[str] | None = None,
+) -> AutomatoFinito:
     """Transforma o conteúdo XML de um arquivo .jff em um AutomatoFinito.
 
     O alfabeto é derivado das transições, pois o formato .jff não o
     declara explicitamente. Transições com <read/> vazio representam
-    transições épsilon (simbodo=None).
+    transições épsilon (simbolo=None).
+
+    Se ``alfabeto`` for informado, ele substitui o alfabeto derivado.
+    Nesse caso, todos os símbodos usados nas transições precisam estar
+    presentes no alfabeto informado.
 
     Raises:
         ErroJFFInvalido: se o conteúdo não for um .jff válido ou descrever
@@ -41,11 +49,21 @@ def converter_jff_para_automato(jff: str) -> AutomatoFinito:
         raise ErroJFFInvalido("Arquivo .jff sem a seção <automaton>.")
 
     estados = _extrair_estados(xml_automato)
-    transicoes, alfabeto = _extrair_transicoes(xml_automato, estados)
+    transicoes, alfabeto_derivado = _extrair_transicoes(xml_automato, estados)
+
+    alfabeto_final = set(alfabeto) if alfabeto is not None else alfabeto_derivado
+
+    simbolos_usados = {t.simbolo for t in transicoes if t.simbolo is not None}
+    if "" in alfabeto_final:
+        raise ErroJFFInvalido("Alfabeto não pode conter símbodo vazio.")
+    if not simbolos_usados.issubset(alfabeto_final):
+        raise ErroJFFInvalido(
+            "Alfabeto informado não contém todos os símbodos usados no autômato."
+        )
 
     automato = AutomatoFinito(
         estados=set(estados.values()),
-        alfabeto=alfabeto,
+        alfabeto=alfabeto_final,
         transicoes=transicoes,
         estado_inicial=_extrair_estado_inicial(estados.values()),
         estados_finais={estado for estado in estados.values() if estado.final},
@@ -62,6 +80,16 @@ def converter_automato_para_jff(automato: AutomatoFinito) -> str:
     """Transforma um AutomatoFinito no conteúdo XML de um arquivo .jff."""
     return serializar(automato)
 
+def converter_alfabeto_json(alfabeto: str) -> set[str] | None:
+    """Converte a string JSON do alfabeto em um conjunto de símbolos.
+
+    Retorna ``None`` se o conteúdo não for um JSON válido.
+    """
+    try:
+        return set(json.loads(alfabeto))
+    except json.JSONDecodeError as erro:
+        print(f"Erro ao converter alfabeto: {erro}")
+        return None
 
 def salvar_jff(jff: str, caminho: str | Path) -> Path:
     """Grava o conteúdo XML de um .jff no caminho informado."""
@@ -106,16 +134,16 @@ def serializar(automato: AutomatoFinito) -> str:
 
     for transicao in sorted(
         automato.transicoes,
-        key=lambda t: (ids[t.origem], ids[t.destino], t.simbodo or ""),
+        key=lambda t: (ids[t.origem], ids[t.destino], t.simbolo or ""),
     ):
         elemento = ET.SubElement(xml_automato, "transition")
         ET.SubElement(elemento, "from").text = str(ids[transicao.origem])
         ET.SubElement(elemento, "to").text = str(ids[transicao.destino])
 
-        if transicao.simbodo is None:
+        if transicao.simbolo is None:
             ET.SubElement(elemento, "read")
         else:
-            ET.SubElement(elemento, "read").text = transicao.simbodo
+            ET.SubElement(elemento, "read").text = transicao.simbolo
 
     ET.indent(raiz)
     texto = ET.tostring(raiz, encoding="unicode")
@@ -185,12 +213,12 @@ def _extrair_transicoes(
             ) from erro
 
         leitura = (elemento.findtext("read") or "").strip()
-        simbodo = leitura or None
+        simbolo = leitura or None
 
-        if simbodo is not None:
-            alfabeto.add(simbodo)
+        if simbolo is not None:
+            alfabeto.add(simbolo)
 
-        transicoes.append(Transicao(origem=origem, simbodo=simbodo, destino=destino))
+        transicoes.append(Transicao(origem=origem, simbolo=simbolo, destino=destino))
 
     return transicoes, alfabeto
 

@@ -51,14 +51,14 @@ def test_complemento_de_afd_incompleto_adiciona_poco_e_completa():
     auto_loops = [
         t
         for t in automato_final.transicoes
-        if t.origem == poco and t.destino == poco and t.simbodo == "a"
+        if t.origem == poco and t.destino == poco and t.simbolo == "a"
     ]
     assert len(auto_loops) == 1
 
     transicao_para_poco = [
         t
         for t in automato_final.transicoes
-        if t.origem.nome == "q1" and t.destino == poco and t.simbodo == "a"
+        if t.origem.nome == "q1" and t.destino == poco and t.simbolo == "a"
     ]
     assert len(transicao_para_poco) == 1
 
@@ -119,6 +119,8 @@ def test_complemento_registra_etapas():
     assert isinstance(etapas, list)
     assert len(etapas) >= 2
     for etapa in etapas:
+        assert hasattr(etapa, "titulo")
+        assert etapa.titulo
         assert hasattr(etapa, "descricao")
         assert etapa.descricao
         snap = etapa.automato

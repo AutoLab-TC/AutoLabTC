@@ -81,13 +81,13 @@ def _agrupar_por_par(
         key=lambda transicao: (
             transicao.origem.nome,
             transicao.destino.nome,
-            transicao.simbodo is not None,
-            transicao.simbodo or "",
+            transicao.simbolo is not None,
+            transicao.simbolo or "",
         ),
     ):
         simbolos = grupos.setdefault((transicao.origem, transicao.destino), [])
-        if transicao.simbodo not in simbolos:
-            simbolos.append(transicao.simbodo)
+        if transicao.simbolo not in simbolos:
+            simbolos.append(transicao.simbolo)
 
     return grupos
 

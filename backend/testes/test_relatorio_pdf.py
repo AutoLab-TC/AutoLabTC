@@ -27,8 +27,8 @@ def construir_resultado() -> ResultadoOperacao:
     return ResultadoOperacao(
         automato_final=automato.copiar(),
         etapas=[
-            Etapa("Automato original", automato.copiar()),
-            Etapa("Automato complemento", automato.copiar()),
+            Etapa("Automato original", "Automato original.", automato.copiar()),
+            Etapa("Automato complemento", "Automato complemento.", automato.copiar()),
         ],
     )
 
@@ -38,7 +38,7 @@ def construir_resultado() -> ResultadoOperacao:
     reason="pdflatex não está disponível no PATH.",
 )
 def test_gerar_pdf_com_etapas():
-    pdf = gerar_pdf(construir_resultado())
+    pdf = gerar_pdf(construir_resultado(), "Complemento de AFD")
 
     assert pdf.startswith(b"%PDF")
     assert len(pdf) > 1000
@@ -60,10 +60,16 @@ def test_gerar_pdf_com_caracteres_especiais():
     automato.adicionar_transicao(Transicao(q0, "a&b", q1))
     resultado = ResultadoOperacao(
         automato_final=automato.copiar(),
-        etapas=[Etapa("Automato com caracteres especiais", automato.copiar())],
+        etapas=[
+            Etapa(
+                "Automato com caracteres especiais",
+                "Automato com caracteres especiais.",
+                automato.copiar(),
+            )
+        ],
     )
 
-    pdf = gerar_pdf(resultado)
+    pdf = gerar_pdf(resultado, "Complemento de AFD")
 
     assert pdf.startswith(b"%PDF")
 
@@ -72,4 +78,4 @@ def test_erro_quando_pdflatex_nao_existe(monkeypatch):
     monkeypatch.setattr(documento.shutil, "which", lambda _: None)
 
     with pytest.raises(ErroGeracaoPdf):
-        gerar_pdf(construir_resultado())
+        gerar_pdf(construir_resultado(), "Complemento de AFD")

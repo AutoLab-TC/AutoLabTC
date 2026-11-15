@@ -38,8 +38,8 @@ def test_transicao_normal_e_epsilon():
     q1 = Estado("q1")
     t1 = Transicao(q0, "a", q1)
     t2 = Transicao(q0, None, q1)  # epsilon
-    assert t1.simbodo == "a"
-    assert t2.simbodo is None
+    assert t1.simbolo == "a"
+    assert t2.simbolo is None
 
 
 def test_automato_valido():
@@ -92,7 +92,7 @@ def test_validar_transicao_estado_desconhecido():
         pass
 
 
-def test_validar_simbodo_fora_do_alfabeto():
+def test_validar_simbolo_fora_do_alfabeto():
     q0 = Estado("q0", inicial=True)
     q1 = Estado("q1")
     a = AutomatoFinito(estados={q0, q1}, alfabeto={"a"}, estado_inicial=q0)
