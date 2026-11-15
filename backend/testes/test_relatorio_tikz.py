@@ -92,7 +92,46 @@ def test_tikz_escapa_nomes_e_simbolos():
     assert r"a\&b" in tikz
 
 
+def test_tikz_usa_coordenadas_do_estado():
+    q0 = Estado("q0", inicial=True, x=2.5, y=-1.5)
+    q1 = Estado("q1", final=True, x=-4.0, y=0.5)
+    automato = AutomatoFinito(
+        estados={q0, q1},
+        alfabeto={"a"},
+        estado_inicial=q0,
+        estados_finais={q1},
+    )
+    automato.adicionar_transicao(Transicao(q0, "a", q1))
+
+    tikz = automato_para_tikz(automato)
+
+    assert "at (2.5,-1.5)" in tikz
+    assert "at (-4.0,0.5)" in tikz
+
+
+def test_tikz_loop_usa_coordenada_do_estado():
+    q0 = Estado("q0", inicial=True, x=0.0, y=-3.0)
+    automato = AutomatoFinito(estados={q0}, alfabeto={"a"}, estado_inicial=q0)
+    automato.adicionar_transicao(Transicao(q0, "a", q0))
+
+    tikz = automato_para_tikz(automato)
+
+    assert "loop below" in tikz
+
+
+def test_tikz_apos_organizar():
+    automato = construir_automato()
+    automato.organizar()
+
+    tikz = automato_para_tikz(automato)
+
+    # Dois estados: posição circular no eixo x, na ordem de nome.
+    assert "at (-2.0,0.0)" in tikz
+    assert "at (2.0,0.0)" in tikz
+
+
 def test_tikz_e_deterministico():
     automato = construir_automato()
 
     assert automato_para_tikz(automato) == automato_para_tikz(automato)
+

@@ -8,6 +8,7 @@ from api.nucleo.utilitario.utilitarios_jff import (
     converter_jff_para_automato,
     salvar_jff,
     serializar,
+
 )
 
 JFF_SIMPLES = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -89,6 +90,8 @@ def test_converter_estado_sem_name_usa_id():
     assert any(e.nome == "0" for e in automato.estados)
 
 
+def test_importar_ler_coordenadas():
+    automato = converter_jff_para_automato(JFF_SIMPLES)
 def test_xml_invalido():
     try:
         converter_jff_para_automato("<structure><automaton>")
@@ -270,7 +273,11 @@ def test_salvar_jff(tmp_path):
     automato = construir_automato_teste()
     texto = converter_automato_para_jff(automato)
 
-    caminho = salvar_jff(texto, tmp_path / "saida.jff")
+    por_nome = {e.nome: e for e in automato.estados}
+    assert por_nome["q0"].x == 100.0
+    assert por_nome["q0"].y == 200.0
+    assert por_nome["q1"].x == 300.0
+    assert por_nome["q1"].y == 200.0
 
     assert caminho.exists()
     assert caminho.read_text(encoding="utf-8") == texto

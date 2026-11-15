@@ -34,6 +34,8 @@ def complemento(
     automato = converter_jff_para_automato(jff, alfabeto=alfabeto_final)
     resultado = complemento_afd(automato)
 
+    resultado.automato_final.organizar()
+
     return RespostaOperacao(
         arquivo_jff=converter_automato_para_jff(resultado.automato_final),
         relatorio_pdf=gerar_pdf(resultado, titulo="Complemento"),

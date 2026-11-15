@@ -7,6 +7,12 @@ from api.nucleo.estado import Estado
 from api.nucleo.excecoes import ErroJFFInvalido
 from api.nucleo.transicao import Transicao
 
+# Fator de escala aplicado às coordenadas x/y ao serializar um .jff:
+# o layout interno usa unidades de cm (consumidas pelo TikZ/PDF), mas o
+# JFLAP interpreta as coordenadas em pixels, então multiplicamos por 100
+# para manter espaçamento legível. Altere este valor para ajustar a escala.
+_FATOR_ESCALA_COORDENADAS_JFF = 50.0
+
 
 def converter_jff_para_automato(
     jff: str,
@@ -96,9 +102,12 @@ def serializar(automato: AutomatoFinito) -> str:
     """Transforma um AutomatoFinito no texto XML de um arquivo .jff.
 
     Os estados recebem ids sequenciais em ordem determinística de nome e
-    coordenadas em grade, para que o arquivo abra organizado no JFLAP.
-    Os marcadores <initial/> e <final/> são escritos a partir dos
-    atributos estado_inicial e estados_finais do autômato.
+    as coordenadas x/y armazenadas em cada Estado, multiplicadas por
+    ``_FATOR_ESCALA_COORDENADAS_JFF`` para converter cm em pixels do
+    JFLAP (chame ``organizar()`` antes para garantir um layout organizado).
+    Os marcadores <initial/> e
+    <final/> são escritos a partir dos atributos estado_inicial e
+    estados_finais do autômato.
     """
     automato.validar()
     ordem = sorted(
@@ -115,8 +124,8 @@ def serializar(automato: AutomatoFinito) -> str:
         elemento = ET.SubElement(
             xml_automato, "state", id=str(indice), name=estado.nome
         )
-        ET.SubElement(elemento, "x").text = f"{100.0 + (indice % 6) * 150:.1f}"
-        ET.SubElement(elemento, "y").text = f"{100.0 + (indice // 6) * 150:.1f}"
+        ET.SubElement(elemento, "x").text = f"{estado.x * _FATOR_ESCALA_COORDENADAS_JFF:.1f}"
+        ET.SubElement(elemento, "y").text = f"{estado.y * (-_FATOR_ESCALA_COORDENADAS_JFF):.1f}"
 
         if estado == automato.estado_inicial:
             ET.SubElement(elemento, "initial")
@@ -168,12 +177,23 @@ def _extrair_estados(xml_automato: ET.Element) -> dict[int, Estado]:
             nome=elemento.attrib.get("name", str(id_estado)),
             inicial=elemento.find("initial") is not None,
             final=elemento.find("final") is not None,
+            x=_extrair_coordenada(elemento, "x"),
+            y=_extrair_coordenada(elemento, "y"),
         )
 
     if not estados:
         raise ErroJFFInvalido("O arquivo .jff não possui estados.")
 
     return estados
+
+
+def _extrair_coordenada(elemento: ET.Element, tag: str) -> float:
+    """Lê a coordenada numérica de uma tag <x>/<y>; 0.0 se ausente ou inválida."""
+    texto = (elemento.findtext(tag) or "").strip()
+    try:
+        return float(texto)
+    except ValueError:
+        return 0.0
 
 
 def _extrair_transicoes(
