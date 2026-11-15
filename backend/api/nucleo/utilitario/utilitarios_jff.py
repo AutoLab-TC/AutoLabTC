@@ -14,7 +14,7 @@ def converter_jff_para_automato(jff: str) -> AutomatoFinito:
 
     O alfabeto é derivado das transições, pois o formato .jff não o
     declara explicitamente. Transições com <read/> vazio representam
-    transições épsilon (simbodo=None).
+    transições épsilon (simbolo=None).
 
     Raises:
         ErroJFFInvalido: se o conteúdo não for um .jff válido ou descrever
@@ -99,16 +99,16 @@ def serializar(automato: AutomatoFinito) -> str:
 
     for transicao in sorted(
         automato.transicoes,
-        key=lambda t: (ids[t.origem], ids[t.destino], t.simbodo or ""),
+        key=lambda t: (ids[t.origem], ids[t.destino], t.simbolo or ""),
     ):
         elemento = ET.SubElement(xml_automato, "transition")
         ET.SubElement(elemento, "from").text = str(ids[transicao.origem])
         ET.SubElement(elemento, "to").text = str(ids[transicao.destino])
 
-        if transicao.simbodo is None:
+        if transicao.simbolo is None:
             ET.SubElement(elemento, "read")
         else:
-            ET.SubElement(elemento, "read").text = transicao.simbodo
+            ET.SubElement(elemento, "read").text = transicao.simbolo
 
     ET.indent(raiz)
     texto = ET.tostring(raiz, encoding="unicode")
@@ -171,13 +171,13 @@ def _extrair_transicoes(
             ) from erro
 
         leitura = (elemento.findtext("read") or "").strip()
-        simbodo = leitura or None
+        simbolo = leitura or None
 
-        if simbodo is not None:
-            alfabeto.add(simbodo)
+        if simbolo is not None:
+            alfabeto.add(simbolo)
 
         transicoes.append(
-            Transicao(origem=origem, simbodo=simbodo, destino=destino)
+            Transicao(origem=origem, simbolo=simbolo, destino=destino)
         )
 
     return transicoes, alfabeto

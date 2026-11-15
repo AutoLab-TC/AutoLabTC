@@ -79,7 +79,7 @@ def test_converter_automato_simples():
 def test_converter_transicao_epsilon():
     automato = converter_jff_para_automato(JFF_EPSILON)
 
-    assert automato.transicoes[0].simbodo is None
+    assert automato.transicoes[0].simbolo is None
     assert automato.alfabeto == set()
 
 
@@ -232,10 +232,10 @@ def test_exportar_roundtrip():
     assert reconstruido.estados_finais == automato.estados_finais
 
     assert sorted(
-        (t.origem.nome, t.simbodo, t.destino.nome)
+        (t.origem.nome, t.simbolo, t.destino.nome)
         for t in reconstruido.transicoes
     ) == sorted(
-        (t.origem.nome, t.simbodo, t.destino.nome)
+        (t.origem.nome, t.simbolo, t.destino.nome)
         for t in automato.transicoes
     )
 

@@ -7,9 +7,9 @@ from api.nucleo.estado import Estado
 class Transicao:
     """Representa uma transição de um autômato finito.
 
-    simbodo=None representa uma transição épsilon (AFN).
+    simbolo=None representa uma transição épsilon (AFN).
     """
 
     origem: Estado
-    simbodo: str | None
+    simbolo: str | None
     destino: Estado
