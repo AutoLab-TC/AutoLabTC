@@ -6,11 +6,11 @@ cadeia aceita pelo primeiro autômato seguida por uma cadeia aceita pelo
 segundo. Para isso, os estados finais do primeiro autômato recebem
 transições épsilon para o estado inicial do segundo.
 
-A construção segue a ideia apresentada por Michael Sipser em
-Introdução à Teoria da Computação: o novo autômato começa no estado inicial
-do primeiro, mantém como finais somente os estados finais do segundo e
-usa não determinismo para escolher onde termina a parte reconhecida pelo
-primeiro autômato.
+A construção segue a prova apresentada por Michael Sipser em Introdução à
+Teoria da Computação (Teorema 1.47, p. 61): o novo autômato começa no
+estado inicial do primeiro, mantém como finais somente os estados finais do
+segundo e usa o não determinismo para escolher onde termina a parte
+reconhecida pelo primeiro autômato.
 
 Formalmente, para os autômatos A1 = (Q1, Σ1, δ1, q1, F1) e
 A2 = (Q2, Σ2, δ2, q2, F2), o autômato resultante é:
@@ -21,17 +21,15 @@ A2 = (Q2, Σ2, δ2, q2, F2), o autômato resultante é:
     estado inicial = q1
     F = F2
 
-Essa é a construção apresentada por Sipser para o fecho das linguagens
-regulares sob concatenação (capítulo 1).
+Para que a união Q = Q1 ∪ Q2 seja feita sem ambiguidade, os estados são
+renomeados no momento da cópia: os estados do primeiro autômato recebem o
+prefixo ``A1_`` e os do segundo o prefixo ``A2_``. Como os prefixos são
+diferentes, os dois conjuntos de estados ficam sempre disjuntos, sem
+precisar comparar nomes.
 
-Como os estados são identificados pelo nome, um estado do segundo autômato
-que tenha o mesmo nome de um estado do primeiro é renomeado com o prefixo
-``N2_`` e, se necessário, um sufixo numérico. Assim, os conjuntos de
-estados dos dois autômatos permanecem disjuntos.
-
-Cada etapa intermediária é registrada em uma lista de Etapa, contendo
-uma descrição textual e uma cópia do autômato naquele momento. Essas
-etapas podem ser consumidas posteriormente pelo gerador de PDF.
+Cada etapa intermediária é registrada em uma lista de Etapa, com título,
+descrição e uma cópia do autômato naquele momento. Essas etapas são
+consumidas pelo gerador de PDF.
 """
 
 from api.nucleo.automato_finito import AutomatoFinito
@@ -41,20 +39,44 @@ from api.nucleo.estado import Estado
 from api.nucleo.excecoes import OperacaoInvalidaError
 from api.nucleo.transicao import Transicao
 
+REF_CONCATENACAO = "Sipser, Teorema 1.47, p. 61"
 
-def _remapear_transicoes(
-    transicoes: list[Transicao],
-    mapa: dict[Estado, Estado],
-) -> list[Transicao]:
-    """Recria as transições usando os estados do mapa informado."""
-    return [
-        Transicao(
-            origem=mapa[transicao.origem],
-            simbodo=transicao.simbodo,
-            destino=mapa[transicao.destino],
+
+def _copiar_com_prefixo(automato: AutomatoFinito, prefixo: str) -> AutomatoFinito:
+    """Cria uma cópia do autômato renomeando cada estado com o prefixo.
+
+    A renomeação acontece junto com a cópia, antes de qualquer outra
+    operação, e garante que os conjuntos de estados de autômatos
+    diferentes sejam sempre disjuntos. Os estados e as transições do
+    autômato devolvido são objetos novos; por isso o autômato de entrada
+    nunca é alterado, mesmo sem uma cópia profunda prévia. Como as
+    transições já apontam para os estados renomeados, não é preciso
+    remapeá-las depois.
+    """
+    renomeados: dict[Estado, Estado] = {
+        estado: Estado(
+            nome=f"{prefixo}_{estado.nome}",
+            inicial=estado.inicial,
+            final=estado.final,
+            x=estado.x,
+            y=estado.y,
         )
-        for transicao in transicoes
-    ]
+        for estado in automato.estados
+    }
+    return AutomatoFinito(
+        estados=set(renomeados.values()),
+        alfabeto=set(automato.alfabeto),
+        transicoes=[
+            Transicao(
+                origem=renomeados[transicao.origem],
+                simbolo=transicao.simbolo,
+                destino=renomeados[transicao.destino],
+            )
+            for transicao in automato.transicoes
+        ],
+        estado_inicial=renomeados[automato.estado_inicial],
+        estados_finais={renomeados[estado] for estado in automato.estados_finais},
+    )
 
 
 def concatenacao(
@@ -64,14 +86,14 @@ def concatenacao(
     Calcula a concatenação das linguagens reconhecidas por dois autômatos.
 
     A operação realiza as seguintes etapas:
-        1. Valida e copia os dois autômatos de entrada.
-        2. Renomeia os estados do segundo autômato que têm o mesmo nome de
-           um estado do primeiro, mantendo os conjuntos de estados disjuntos.
-        3. Combina seus estados, alfabetos e transições, mantendo como
-           inicial o estado inicial do primeiro e como finais os estados
-           finais do segundo.
+        1. Valida os dois autômatos de entrada.
+        2. Copia os autômatos renomeando os estados com os prefixos A1 e
+           A2, o que mantém os conjuntos de estados disjuntos.
+        3. Combina estados, alfabetos e transições, mantendo como inicial
+           o estado inicial do primeiro e como finais os estados finais do
+           segundo (itens 1 a 3 da prova do Teorema 1.47 de Sipser).
         4. Adiciona transições épsilon dos estados finais do primeiro
-           autômato para o estado inicial do segundo.
+           autômato para o estado inicial do segundo (item 4 da prova).
         5. Registra as etapas intermediárias e o autômato final.
 
     A construção não exige que as entradas sejam determinísticas. O
@@ -91,109 +113,83 @@ def concatenacao(
         OperacaoInvalidaError: Se algum dos autômatos de entrada for
         inconsistente ou não possuir um estado inicial válido.
     """
-    primeiro = automato1.copiar()
-    segundo = automato2.copiar()
-
     try:
-        primeiro.validar()
+        automato1.validar()
     except ValueError as erro:
         raise OperacaoInvalidaError(f"O primeiro autômato é inválido: {erro}") from erro
 
     try:
-        segundo.validar()
+        automato2.validar()
     except ValueError as erro:
         raise OperacaoInvalidaError(f"O segundo autômato é inválido: {erro}") from erro
 
+    primeiro = _copiar_com_prefixo(automato1, "A1")
+    segundo = _copiar_com_prefixo(automato2, "A2")
+
     etapas = [
         Etapa(
-            descricao="Primeiro autômato de entrada",
+            titulo="Primeiro autômato de entrada",
+            descricao=(
+                "Este é o primeiro autômato da concatenação, o N1 do "
+                "Sipser, que reconhece a linguagem A1.\n"
+                "Os estados são copiados com o prefixo A1, o que mantém Q1 "
+                "e Q2 disjuntos para a união de Q1 com Q2.\n"
+                "O estado inicial q1 e os estados finais F1 permanecem os "
+                "mesmos.\n"
+                f"Referência: {REF_CONCATENACAO}."
+            ),
             automato=primeiro.copiar(),
         ),
         Etapa(
-            descricao="Segundo autômato de entrada",
+            titulo="Segundo autômato de entrada",
+            descricao=(
+                "Este é o segundo autômato, o N2 do Sipser, que reconhece "
+                "a linguagem A2.\n"
+                "Os estados são copiados com o prefixo A2, então nenhum "
+                "estado de N1 se confunde com um estado de N2.\n"
+                "O estado inicial q2 e os estados finais F2 são "
+                "preservados."
+            ),
             automato=segundo.copiar(),
         ),
     ]
 
-    nomes_primeiro = {estado.nome for estado in primeiro.estados}
-    nomes_utilizados = nomes_primeiro | {estado.nome for estado in segundo.estados}
+    estado_inicial = primeiro.estado_inicial
+    estado_inicial_segundo = segundo.estado_inicial
+    estados_finais = set(segundo.estados_finais)
 
-    mapa_primeiro: dict[Estado, Estado] = {
-        estado: Estado(
-            nome=estado.nome,
-            inicial=estado == primeiro.estado_inicial,
-            final=False,
-        )
-        for estado in primeiro.estados
-    }
-
-    mapa_segundo: dict[Estado, Estado] = {}
-    houve_renomeacao = False
-    for estado in sorted(segundo.estados, key=lambda item: item.nome):
-        nome = estado.nome
-        if nome in nomes_primeiro:
-            houve_renomeacao = True
-            nome_base = f"N2_{nome}"
-            nome = nome_base
-            sufixo = 1
-            while nome in nomes_utilizados:
-                nome = f"{nome_base}_{sufixo}"
-                sufixo += 1
-            nomes_utilizados.add(nome)
-
-        mapa_segundo[estado] = Estado(
-            nome=nome,
-            inicial=False,
-            final=estado in segundo.estados_finais,
-        )
-
-    estado_inicial = mapa_primeiro[primeiro.estado_inicial]
-    estado_inicial_segundo = mapa_segundo[segundo.estado_inicial]
-    estados_finais = {mapa_segundo[estado] for estado in segundo.estados_finais}
-
-    transicoes_primeiro = _remapear_transicoes(primeiro.transicoes, mapa_primeiro)
-    transicoes_segundo = _remapear_transicoes(segundo.transicoes, mapa_segundo)
-
-    if houve_renomeacao:
-        segundo_renomeado = AutomatoFinito(
-            estados=set(mapa_segundo.values()),
-            alfabeto=segundo.alfabeto,
-            transicoes=list(transicoes_segundo),
-            estado_inicial=estado_inicial_segundo,
-            estados_finais=set(estados_finais),
-        )
-        # O snapshot representa o segundo autômato isolado, então o seu
-        # estado inicial deve estar marcado como inicial. A cópia evita
-        # alterar o estado compartilhado com o autômato combinado, no qual
-        # o único estado inicial é o do primeiro autômato.
-        snapshot_segundo = segundo_renomeado.copiar()
-        if snapshot_segundo.estado_inicial is not None:
-            snapshot_segundo.estado_inicial.inicial = True
-
-        etapas.append(
-            Etapa(
-                descricao=(
-                    "Renomear os estados do segundo autômato que têm o mesmo "
-                    "nome de um estado do primeiro"
-                ),
-                automato=snapshot_segundo,
-            )
-        )
-
-    estados = set(mapa_primeiro.values()) | set(mapa_segundo.values())
     automato_combinado = AutomatoFinito(
-        estados=estados,
+        estados=primeiro.estados | segundo.estados,
         alfabeto=primeiro.alfabeto | segundo.alfabeto,
-        transicoes=transicoes_primeiro + transicoes_segundo,
+        transicoes=primeiro.transicoes + segundo.transicoes,
         estado_inicial=estado_inicial,
         estados_finais=estados_finais,
     )
 
+    # O combinado reúne os estados de N1 e de N2, mas só pode ter um estado
+    # inicial (o de N1) e como finais apenas os de N2 (F = F2). Normalizar
+    # os atributos mantém cada Estado coerente com os campos
+    # estado_inicial e estados_finais do autômato, inclusive para as
+    # etapas seguintes e para quem consumir o resultado.
+    for estado in automato_combinado.estados:
+        estado.inicial = estado == estado_inicial
+        estado.final = estado in estados_finais
+
     etapas.append(
         Etapa(
-            descricao=(
+            titulo=(
                 "Combinar os autômatos mantendo o inicial do primeiro "
                 "e os finais do segundo"
+            ),
+            descricao=(
+                "Primeira parte da prova do Teorema 1.47 (itens 1 a 3).\n"
+                "O conjunto de estados é a união de Q1 com Q2, o alfabeto "
+                "é a união dos dois alfabetos e a função de transição "
+                "reúne as transições de N1 e de N2.\n"
+                "O estado inicial é q1, o mesmo de N1, e os únicos estados "
+                "finais são os de F2, os finais de N2.\n"
+                "Ainda não existem transições épsilon, então o autômato "
+                "ainda não reconhece A1 concatenado com A2."
             ),
             automato=automato_combinado.copiar(),
         )
@@ -204,8 +200,8 @@ def concatenacao(
     for estado_final in sorted(primeiro.estados_finais, key=lambda estado: estado.nome):
         automato_combinado.adicionar_transicao(
             Transicao(
-                origem=mapa_primeiro[estado_final],
-                simbodo=None,
+                origem=estado_final,
+                simbolo=None,
                 destino=estado_inicial_segundo,
             )
         )
@@ -219,9 +215,19 @@ def concatenacao(
 
     etapas.append(
         Etapa(
-            descricao=(
+            titulo=(
                 "Adicionar transições épsilon dos finais do primeiro "
                 "autômato ao inicial do segundo"
+            ),
+            descricao=(
+                "Item 4 da prova do Teorema 1.47.\n"
+                "Para cada estado final de N1 é criada uma transição "
+                "épsilon até o estado inicial q2 de N2.\n"
+                "Épsilon não consome símbolo: ela permite saltar de N1 "
+                "para N2 no ponto em que N1 termina de reconhecer um "
+                "prefixo da entrada.\n"
+                "A função de transição passa a ser a de N1 unida à de N2, "
+                "acrescida dessas transições épsilon."
             ),
             automato=automato_combinado.copiar(),
         )
@@ -229,9 +235,20 @@ def concatenacao(
 
     etapas.append(
         Etapa(
+            titulo=(
+                "Autômato final da concatenação: AFN com transições "
+                "épsilon, inicial do primeiro autômato e finais do segundo"
+            ),
             descricao=(
-                "Autômato final da concatenação: AFN com transições épsilon, "
-                "inicial do primeiro autômato e finais do segundo"
+                "Este é o autômato N do Teorema 1.47, com estados Q, "
+                "estado inicial q1 e estados finais F2.\n"
+                "O não determinismo permite adivinhar onde a entrada deve "
+                "ser dividida: a palavra é aceita quando pode ser separada "
+                "em duas partes, a primeira aceita por N1 e a segunda por "
+                "N2.\n"
+                "Como apenas os estados finais de N2 continuam finais, a "
+                "segunda parte precisa ser lida por N2 até um de seus "
+                "estados finais."
             ),
             automato=automato_combinado.copiar(),
         )
