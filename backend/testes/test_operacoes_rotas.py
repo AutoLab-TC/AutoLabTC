@@ -161,3 +161,64 @@ def test_alfabeto_com_simbodo_ausente_retorna_422(cliente):
 
     assert resposta.status_code == 422
     assert resposta.json()["detail"]
+
+
+def test_concatenacao_retorna_zip_com_os_dois_arquivos(cliente, monkeypatch):
+    resposta_fake = RespostaOperacao(arquivo_jff=JFF, relatorio_pdf=b"%PDF-1.4\n")
+    recebido = {}
+
+    def falsa_concatenacao(jff1, jff2, alfabeto1=None, alfabeto2=None):
+        recebido.update(
+            jff1=jff1,
+            jff2=jff2,
+            alfabeto1=alfabeto1,
+            alfabeto2=alfabeto2,
+        )
+        return resposta_fake
+
+    monkeypatch.setattr(operacoes_rotas, "concatenacao", falsa_concatenacao)
+
+    resposta = cliente.post(
+        "/operacoes/concatenacao",
+        files={
+            "arquivo1": ("primeiro.jff", JFF.encode("utf-8"), "application/xml"),
+            "arquivo2": ("segundo.jff", JFF.encode("utf-8"), "application/xml"),
+        },
+        data={"alfabeto1": '["a","b"]', "alfabeto2": '["a","c"]'},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.headers["content-type"] == "application/zip"
+    assert (
+        resposta.headers["content-disposition"]
+        == 'attachment; filename="concatenacao.zip"'
+    )
+
+    with ZipFile(BytesIO(resposta.content)) as zip:
+        assert zip.namelist() == ["concatenacao.jff", "concatenacao.pdf"]
+        assert zip.read("concatenacao.jff") == JFF.encode("utf-8")
+        assert zip.read("concatenacao.pdf") == b"%PDF-1.4\n"
+
+    assert recebido == {
+        "jff1": JFF.encode("utf-8"),
+        "jff2": JFF.encode("utf-8"),
+        "alfabeto1": '["a","b"]',
+        "alfabeto2": '["a","c"]',
+    }
+
+
+@pytest.mark.parametrize("indice_invalido", [0, 1])
+def test_concatenacao_jff_invalido_retorna_422(cliente, indice_invalido):
+    arquivos = [JFF.encode("utf-8"), JFF.encode("utf-8")]
+    arquivos[indice_invalido] = b"isto nao e um xml"
+
+    resposta = cliente.post(
+        "/operacoes/concatenacao",
+        files={
+            "arquivo1": ("primeiro.jff", arquivos[0], "application/xml"),
+            "arquivo2": ("segundo.jff", arquivos[1], "application/xml"),
+        },
+    )
+
+    assert resposta.status_code == 422
+    assert resposta.json()["detail"]

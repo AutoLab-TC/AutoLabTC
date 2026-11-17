@@ -4,7 +4,8 @@ import pytest
 
 from api.nucleo.dto.resposta_operacao import RespostaOperacao
 from api.nucleo.utilitario.utilitarios_jff import converter_jff_para_automato
-from api.servicos.operacoes_servico import complemento
+from api.servicos import operacoes_servico
+from api.servicos.operacoes_servico import complemento, concatenacao
 
 JFF = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <structure>
@@ -84,3 +85,41 @@ def test_complemento_alfabeto_invalido_usa_derivado():
 
     assert automato.eh_afd()
     assert automato.alfabeto == {"a"}
+
+
+@pytest.mark.skipif(
+    shutil.which("pdflatex") is None,
+    reason="pdflatex não está disponível no PATH.",
+)
+def test_concatenacao():
+    resultado = concatenacao(JFF.encode("utf-8"), JFF.encode("utf-8"))
+
+    assert isinstance(resultado, RespostaOperacao)
+    assert "<structure>" in resultado.arquivo_jff
+
+    automato = converter_jff_para_automato(resultado.arquivo_jff)
+
+    assert any(transicao.simbolo is None for transicao in automato.transicoes)
+    assert automato.alfabeto == {"a"}
+
+
+def test_concatenacao_repassa_alfabetos(monkeypatch):
+    alfabetos_recebidos = []
+
+    def converter(jff, alfabeto=None):
+        alfabetos_recebidos.append(alfabeto)
+        return converter_jff_para_automato(jff, alfabeto=alfabeto)
+
+    monkeypatch.setattr(operacoes_servico, "converter_jff_para_automato", converter)
+    monkeypatch.setattr(
+        operacoes_servico, "gerar_pdf", lambda resultado, titulo: b"%PDF-1.4\n"
+    )
+
+    concatenacao(
+        JFF.encode("utf-8"),
+        JFF.encode("utf-8"),
+        alfabeto1='["a","b"]',
+        alfabeto2="a,b",
+    )
+
+    assert alfabetos_recebidos == [{"a", "b"}, None]
