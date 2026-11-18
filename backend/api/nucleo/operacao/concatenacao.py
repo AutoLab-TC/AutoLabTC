@@ -7,7 +7,7 @@ from api.nucleo.estado import Estado
 from api.nucleo.excecoes import OperacaoInvalidaError
 from api.nucleo.transicao import Transicao
 
-REF_CONCATENACAO = "Sipser, Teorema 1.23, p. 52"
+REF_CONCATENACAO = "Sipser, Teorema 1.47, p. 62"
 
 
 def _copiar_com_prefixo(automato: AutomatoFinito, prefixo: str) -> AutomatoFinito:
