@@ -95,7 +95,7 @@ def _agrupar_por_par(
 def _rotulo_simbolos(simbolos: list[str | None]) -> str:
     """Monta o rótulo LaTeX de uma aresta."""
     rotulos = [
-        r"\varepsilon" if simbolo is None else escapar_latex(simbolo)
+        r"$\varepsilon$" if simbolo is None else escapar_latex(simbolo)
         for simbolo in simbolos
     ]
     return ", ".join(rotulos)

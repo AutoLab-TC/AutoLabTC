@@ -54,8 +54,8 @@ def test_tikz_com_epsilon():
 
     tikz = automato_para_tikz(automato)
 
-    assert r"\varepsilon" in tikz
-    assert r"a, \varepsilon" in tikz or r"\varepsilon, a" in tikz
+    assert r"$\varepsilon$" in tikz
+    assert r"a, $\varepsilon$" in tikz or r"$\varepsilon$, a" in tikz
 
 
 def test_tikz_com_arestas_de_ida_e_volta():
